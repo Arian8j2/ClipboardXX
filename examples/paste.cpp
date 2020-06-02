@@ -1,4 +1,11 @@
-// g++ paste.cpp `pkg-config --cflags --libs gtkmm-3.0`
+/* Linux
+	apt-get install libgtkmm-3.0-dev
+	g++ paste.cpp `pkg-config --cflags --libs gtkmm-3.0`
+*/
+
+/* Windows
+    g++ paste.cpp
+*/
 
 #include "../ClipboardXX.hpp"
 
