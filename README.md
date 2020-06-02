@@ -5,16 +5,22 @@ Manage clipboard in easiest way + cross platform way :)
 ```C++
 #include "../ClipboardXX.hpp"
 #include <string>
+#include <iostream>
 
 int main(){
     CClipboardXX clipboard;
 
-    // copy
-    clipboard‌ << "text you wanna copy";
+    try{
+        // copy
+        clipboard‌ << "text you wanna copy";
 
-    // paste
-    std::string paste_text;
-    clipboard >> paste_text;
+        // paste
+        std::string paste_text;
+        clipboard >> paste_text;
+
+    }catch(CExceptionXX &e){
+        std::cout << e.what() << std::endl;
+    }
 
     return 0;
 }
