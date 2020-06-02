@@ -75,7 +75,7 @@ class CClipboardWindows: public IClipboardOS{
             if(pResult == NULL)
                 throw CExceptionXX("Clipboard has no data to paste!");
 
-            Result = pResult;
+            sString = pResult;
             GlobalFree(pResult);
         }
 

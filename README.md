@@ -4,6 +4,7 @@ Manage clipboard in easiest way + cross platform way :)
 ## Example
 ```C++
 #include "../ClipboardXX.hpp"
+#include <string>
 
 int main(){
 	CClipboardXX clipboard;
@@ -40,9 +41,3 @@ https://www.gtkmm.org/en/download.html
 ```console
     g++ your_file.cpp `pkg-config --cflags --libs gtkmm-3.0`
 ```
-
-
-
-
-
-
