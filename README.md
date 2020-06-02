@@ -21,8 +21,9 @@ int main(){
 You can also do some *error handling*
 ```C++
 try{
+
     CClipboardXX clipboard;
-    clipboard << "";
+    clipboard << "something";
 
 }catch(CExceptionXX &e){
     std::cout << e.what() << std::endl;
@@ -38,7 +39,7 @@ Nothing special need to do, just copy ClipboardXX.hpp to your include path
 ClipboardXX use **Gtk** for managing clipboard in linux so:
 1. You need to download **Gtk** dev files first
 You can do this by package manager in your distro
-    ```console
+    ```bash
     apt-get install libgtkmm-3.0-dev
     ```
     or you can download and compile it manually by their [website](https://www.gtkmm.org/en/download.html)
@@ -46,6 +47,6 @@ You can do this by package manager in your distro
 
 2. Now you need to copy ClipboardXX.hpp to your include path
 3. Compile it like this
-    ```console
-        g++ your_file.cpp `pkg-config --cflags --libs gtkmm-3.0`
+    ```bash
+    g++ your_file.cpp `pkg-config --cflags --libs gtkmm-3.0`
     ```
