@@ -7,10 +7,10 @@ Manage clipboard in easiest way + cross platform way :)
 #include <string>
 
 int main(){
-	CClipboardXX clipboard;
+    CClipboardXX clipboard;
 
     // copy
-	clipboard‌ << "text you wanna copy";
+    clipboard‌ << "text you wanna copy";
 
     // paste
     std::string paste_text;
