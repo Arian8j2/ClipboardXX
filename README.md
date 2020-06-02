@@ -1,5 +1,5 @@
 # ClipboardXX
-Manage clipboard in **easiest** and **cross platform** way
+Manage clipboard in **easiest** and **cross platform** way  
 *Copyright (C) 2020 Arian Rezazadeh*
 
 ## Example
