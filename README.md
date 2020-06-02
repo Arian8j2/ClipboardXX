@@ -18,7 +18,7 @@ int main(){
     clipboard >> paste_text;
 }
 ```
-You can also do some *error handling*
+You can also do some _**error handling**_
 ```C++
 try{
 
