@@ -53,14 +53,12 @@ class CClipboardWindows: public IClipboardOS{
 
     public:
         ~CClipboardWindows(){
-            // closeclipboard
+            CloseClipboard();
         }
 
         void CopyText(const char* pText, size_t Length){
-
             if(!EmptyClipboard())
                 throw CExceptionXX("Cannot empty clipboard!");
-            
 
             HGLOBAL pGlobal = GlobalAlloc(GMEM_FIXED, (Length + 1)* sizeof(char));
             strncpy((char *)pGlobal, pText, Length);
