@@ -4,7 +4,7 @@ Manage clipboard in **easiest** and **cross platform** way
 
 ## Example
 ```C++
-#include "../ClipboardXX.hpp"
+#include "ClipboardXX.hpp"
 #include <string>
 
 int main(){
@@ -26,7 +26,9 @@ try{
     clipboard << "something";
 
 }catch(CExceptionXX &e){
+
     std::cout << e.what() << std::endl;
+
 }
 ```
 
