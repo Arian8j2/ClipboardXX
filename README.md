@@ -18,7 +18,7 @@ int main(){
     clipboard >> paste_text;
 }
 ```
-You can also do some _**error handling**_
+If some errors happens like cannot opened clipboard and etc. You can use  _**error handling**_
 ```C++
 try{
 
@@ -35,20 +35,12 @@ try{
 ## Setup
 
 ### Windows
-Nothing special need to do, just copy include/ClipboardXX.hpp to your include path or you can use Cmake
+Nothing special need to do, just copy include/ClipboardXX.hpp to your include path or you can use CMake
 
-### Linux
-ClipboardXX in Linux is just a wrapper for **Qt5 Clipboard**
-1. You need to download **Gtk** dev files first
-You can do this by package manager in your distro
-    ```bash
-    apt-get install libgtkmm-3.0-dev
-    ```
-    or you can download and compile it manually by their [website](https://www.gtkmm.org/en/download.html)
-
-
-2. Now you need to copy ClipboardXX.hpp to your include path
-3. Compile it like this
-    ```bash
-    g++ your_file.cpp `pkg-config --cflags --libs gtkmm-3.0`
-    ```
+### Unix
+ClipboardXX in Unix based operating systems is just a wrapper around **Qt5 Clipboard**   
+so you can use CMake for compilation and just use:
+```cmake
+    add_subdirectory(ClipboardXX)
+```
+in your cmake file. include directories and links will be automatically setted 
