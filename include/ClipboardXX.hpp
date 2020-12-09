@@ -70,11 +70,10 @@ class CClipboardWindows: public IClipboardOS{
         void PasteText(std::string &sString){
             char* pResult = (char*) GetClipboardData(CF_TEXT);
 
-            if(pResult == NULL)
-                throw CExceptionXX("Clipboard has no data to paste!");
-
-            sString = pResult;
-            GlobalFree(pResult);
+            if(pResult != NULL){
+                sString = pResult;
+                GlobalFree(pResult);
+            }
         }
 
         friend class CClipboardXX;
