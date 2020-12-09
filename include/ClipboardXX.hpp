@@ -82,45 +82,33 @@ class CClipboardWindows: public IClipboardOS{
 
 #elif LINUX
 
-#include <gtk/gtk.h>
+#include <QGuiApplication>
+#include <QClipboard>
+#include <cstdio>
+
+// for some reason have to declare Qt App in global (idk why)
+static int gs_FakeArgc = 1; 
+static QGuiApplication gs_GuiApp(gs_FakeArgc, nullptr);
 
 class CClipboardLinux: public IClipboardOS{
     private:
-        GtkClipboard *m_pClip;
+        QClipboard* m_pClipboard;
 
         CClipboardLinux(){
-            gtk_init(0, 0);
-            m_pClip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-        }
-
-        static void copy_callback(GtkClipboard *pClip, const gchar *pText, gpointer pData){
-            if(pData){
-                gtk_clipboard_set_text(
-                    pClip, 
-                    (const gchar*) pData, 
-                    strlen( (const char*) pData)
-                );
-            }
-
-            gtk_main_quit();
-        }
-
-        static void paste_callback(GtkClipboard *pClip, const gchar *pText, gpointer pData){
-            std::string* pString = (std::string*)pData;
-            (*pString) = pText;
-
-            gtk_main_quit();
+            m_pClipboard = gs_GuiApp.clipboard(); 
         }
         
     public:
+        ~CClipboardLinux(){
+            gs_GuiApp.quit();
+        }
+
         void CopyText(const char* pText, size_t Length){
-            gtk_clipboard_request_text(m_pClip, copy_callback, (gpointer)pText);
-            gtk_main();
+            m_pClipboard->setText(pText, QClipboard::Mode::Clipboard);
         }
 
         void PasteText(std::string &sString){
-            gtk_clipboard_request_text(m_pClip, paste_callback, (gpointer)&sString);
-            gtk_main();
+            sString = m_pClipboard->text().toStdString();
         }
 
         friend class CClipboardXX;
