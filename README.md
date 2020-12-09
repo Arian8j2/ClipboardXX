@@ -35,10 +35,10 @@ try{
 ## Setup
 
 ### Windows
-Nothing special need to do, just copy ClipboardXX.hpp to your include path
+Nothing special need to do, just copy include/ClipboardXX.hpp to your include path or you can use Cmake
 
 ### Linux
-ClipboardXX use **Gtk** for managing clipboard in linux so:
+ClipboardXX in Linux is just a wrapper for **Qt5 Clipboard**
 1. You need to download **Gtk** dev files first
 You can do this by package manager in your distro
     ```bash

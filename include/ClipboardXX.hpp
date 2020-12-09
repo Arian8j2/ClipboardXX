@@ -6,10 +6,8 @@
 
 #if defined(_WIN32) || defined(WIN32)
     #define WINDOWS 1
-#elif defined(__unix__)
-    #define LINUX 1
 #else
-    #error "Not Supported OS"
+    #define LINUX 1
 #endif
 
 
