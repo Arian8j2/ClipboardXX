@@ -81,7 +81,6 @@ class CClipboardWindows: public IClipboardOS{
 
 #include <QGuiApplication>
 #include <QClipboard>
-#include <cstdio>
 
 // for some reason have to declare Qt App in global (idk why)
 static int gs_FakeArgc = 1; 
