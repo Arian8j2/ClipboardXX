@@ -18,7 +18,7 @@ int main(){
     clipboard >> paste_text;
 }
 ```
-If some errors happens like cannot opened clipboard and etc. You can use  _**error handling**_
+If some error happens like cannot opening clipboard and etc. You can use  _**error handling**_
 ```C++
 try{
 
@@ -35,7 +35,7 @@ try{
 ## Setup
 
 ### Windows
-Nothing special need to do, just copy include/ClipboardXX.hpp to your include path or you can use CMake
+Nothing specially need to do, just copy `include/ClipboardXX.hpp` to your include path or you can use CMake
 
 ### Unix
 ClipboardXX in Unix based operating systems is just a wrapper around **Qt5 Clipboard**   
