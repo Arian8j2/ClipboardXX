@@ -59,7 +59,13 @@ class CClipboardWindows: public IClipboardOS{
                 throw CExceptionXX("Cannot empty clipboard!");
 
             HGLOBAL pGlobal = GlobalAlloc(GMEM_FIXED, (Length + 1)* sizeof(char));
-            strncpy((char *)pGlobal, pText, Length);
+
+            #ifdef _MSC_VER
+                strcpy_s((char *)pGlobal, (Length + 1)*sizeof(char), pText);
+            #else
+                strncpy((char *)pGlobal, pText, Length);
+            #endif
+            
             SetClipboardData(CF_TEXT, pGlobal);
 
             GlobalFree(pGlobal);
