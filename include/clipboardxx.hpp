@@ -5,96 +5,43 @@
 #include <string.h>
 
 #if defined(_WIN32) || defined(WIN32)
-    #define WINDOWS 1
-#else
-    #define LINUX 1
-#endif
-
-#ifdef LINUX
-    #include <X11/Xlib.h>
+    #define WINDOWS
+    #include <windows.h>
+#elif defined(unix)
+    #define UNIX
     #include <thread>
+    #include <X11/Xlib.h>
+#else
+    #error "platform not supported"
 #endif
 
-
-class CExceptionXX : public std::exception{
+namespace clipboardxx {
+    class exception: public std::exception {
     private:
-        const char* m_pReason;
-
+        const char* reason;
+    
     public:
-        CExceptionXX(const char* pReason) : m_pReason(pReason){};
+        exception(const char* reason): reason(reason) { };
 
-        const char* what(){
-            return m_pReason;
+        const char* what() {
+            return reason;
         }
-};
+    };
 
-class IClipboardOS{
+    class clipboard_os {
     protected:
-        // not accessable from other files :)
-        IClipboardOS(){};
+        clipboard_os() { }
 
     public:
-        virtual void CopyText(const char* pText, size_t Length){};
-        virtual void PasteText(std::string &sString){};
-};
-class CClipboardXX;
+        virtual void copy(const char* text, size_t length) = 0;
+        virtual void paste(std::string& dest) = 0;
+    };
 
+    #ifdef UNIX
 
-
-#ifdef WINDOWS
-
-
-#include <Windows.h>
-
-class CClipboardWindows: public IClipboardOS{
+    class clipboard_unix: public clipboard_os {
     private:
-        CClipboardWindows(){
-            if(!OpenClipboard(0)){
-                throw CExceptionXX("Cannot open clipboard!");
-            }
-        }
-
-    public:
-        ~CClipboardWindows(){
-            CloseClipboard();
-        }
-
-        void CopyText(const char* pText, size_t Length){
-            if(!EmptyClipboard())
-                throw CExceptionXX("Cannot empty clipboard!");
-
-            HGLOBAL pGlobal = GlobalAlloc(GMEM_FIXED, (Length + 1)* sizeof(char));
-
-            #ifdef _MSC_VER
-                strcpy_s((char *)pGlobal, (Length + 1)*sizeof(char), pText);
-            #else
-                strncpy((char *)pGlobal, pText, Length);
-            #endif
-            
-            SetClipboardData(CF_TEXT, pGlobal);
-
-            GlobalFree(pGlobal);
-        }
-
-        void PasteText(std::string &sString){
-            char* pResult = (char*) GetClipboardData(CF_TEXT);
-
-            if(pResult != NULL){
-                sString = pResult;
-                GlobalFree(pResult);
-            } else {
-                sString.clear();
-            }
-        }
-
-        friend class CClipboardXX;
-};
-
-#elif LINUX
-
-class CClipboardLinux: public IClipboardOS{
-    private:
-        struct CopyData {
+        struct copydata {
             std::thread* m_thread;
             unsigned char* m_text;
             size_t m_length;
@@ -106,7 +53,7 @@ class CClipboardLinux: public IClipboardOS{
         Atom m_sel;
         Atom m_utf8;
 
-        CClipboardLinux(){
+        clipboard_unix() {
             m_display = XOpenDisplay(NULL);
             
             int screen = XDefaultScreen(m_display);
@@ -121,7 +68,7 @@ class CClipboardLinux: public IClipboardOS{
             m_copydata.m_text = nullptr;
         }
         
-        static void handle_requests(CClipboardLinux* self) {
+        static void handle_requests(clipboard_unix* self) {
             XEvent event;
             while(true) {
                 XNextEvent(self->m_display, &event);
@@ -168,20 +115,20 @@ class CClipboardLinux: public IClipboardOS{
         }
 
     public:
-        ~CClipboardLinux(){
+        ~clipboard_unix() {
             free_copydata();
             XDestroyWindow(m_display, m_window);
             XCloseDisplay(m_display);
         }
 
-        void CopyText(const char* text, size_t len){
+        virtual void copy(const char* text, size_t length) {
             XSetSelectionOwner(m_display, m_sel, m_window, CurrentTime);
 
             free_ifexist((void**) &m_copydata.m_text);
 
-            m_copydata.m_text = new unsigned char[len];
-            m_copydata.m_length = len;
-            strncpy((char*) m_copydata.m_text, text, len);
+            m_copydata.m_text = new unsigned char[length];
+            m_copydata.m_length = length;
+            strncpy((char*) m_copydata.m_text, text, length);
 
             if(m_copydata.m_thread == nullptr) {
                 m_copydata.m_thread = new std::thread(handle_requests, this);
@@ -189,7 +136,7 @@ class CClipboardLinux: public IClipboardOS{
             }
         }
 
-        void PasteText(std::string &sString){
+        virtual void paste(std::string& dest) {
             Atom res = XInternAtom(m_display, "RESULT", false);
 
             XConvertSelection(m_display, m_sel, m_utf8, res, m_window, CurrentTime);
@@ -199,7 +146,7 @@ class CClipboardLinux: public IClipboardOS{
                 XNextEvent(m_display, &event);
                 if(event.type == SelectionNotify) {
                     if(event.xselection.property == None) {
-                        sString.clear();
+                        dest.clear();
                         return;
                     }
 
@@ -211,7 +158,7 @@ class CClipboardLinux: public IClipboardOS{
                     XGetWindowProperty(m_display, m_window, res, 0, -1, false, AnyPropertyType,
                         &type_return, &format_return, &index, &size, &text);
 
-                    sString = (char*) text;
+                    dest = (char*) text;
 
                     XFree(text);
                     XDeleteProperty(m_display, m_window, res);
@@ -220,35 +167,81 @@ class CClipboardLinux: public IClipboardOS{
             }
         }
 
-        friend class CClipboardXX;
-};
+        friend class clipboard;
+    };
 
-#endif
+    #elif defined(WINDOWS)
 
-class CClipboardXX{
+    class clipboard_windows: public clipboard_os {
     private:
-        IClipboardOS* m_pClipboard = new 
-        
-        #ifdef WINDOWS
-            CClipboardWindows();
-        #elif LINUX
-            CClipboardLinux();
-        #endif
+        clipboard_windows() {
+            if(!OpenClipboard(0)) {
+                throw exception("Cannot open clipboard!");
+            }
+        }
+    
+    public:
+        ~clipboard_windows() {
+            CloseClipboard();
+        }
 
+        virtual void copy(const char* text, size_t length) {
+            if(!EmptyClipboard())
+                throw exception("Cannot empty clipboard!");
+
+            HGLOBAL global = GlobalAlloc(GMEM_FIXED, (length + 1)* sizeof(char));
+
+            #ifdef _MSC_VER
+                strcpy_s((char *)global, (length + 1) * sizeof(char), text);
+            #else
+                strncpy((char *)global, text, length);
+            #endif
+            
+            SetClipboardData(CF_TEXT, global);
+            GlobalFree(global);
+        }
+
+        virtual void paste(std::string& dest) {
+            char* result = (char*) GetClipboardData(CF_TEXT);
+
+            if(result != NULL){
+                dest = result;
+                GlobalFree(result);
+            } else {
+                dest.clear();
+            }
+        }
+
+        friend class clipboard;
+    };
+
+    #endif
+
+    class clipboard {
+    private:
+        clipboard_os* m_clipboard = new 
+        #ifdef UNIX
+            clipboard_unix
+        #elif defined(WINDOWS)
+            clipboard_windows
+        #endif
+        ;
 
     public:
-        ~CClipboardXX(){
-            delete m_pClipboard;
-        }       
-        void operator<<(const char* pText){
-            m_pClipboard->CopyText(pText, strlen(pText));
+        ~clipboard() {
+            delete m_clipboard;
         }
 
-        void operator<<(std::string &sText){
-            m_pClipboard->CopyText(sText.c_str(), sText.size());
+        void operator<<(const char* text) {
+            m_clipboard->copy(text, strlen(text));
         }
 
-        void operator>>(std::string &sResult){
-            m_pClipboard->PasteText(sResult);
+        void operator<<(std::string& text) {
+            m_clipboard->copy(text.c_str(), text.size());
         }
+
+        void operator>>(std::string& dest) {
+            m_clipboard->paste(dest);
+        }
+    };
 };
