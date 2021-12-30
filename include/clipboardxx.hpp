@@ -7,8 +7,8 @@
 #if defined(_WIN32) || defined(WIN32)
     #define WINDOWS
     #include <windows.h>
-#elif defined(unix)
-    #define UNIX
+#elif defined(__linux__)
+    #define LINUX
     #include <thread>
     #include <X11/Xlib.h>
 #else
@@ -37,9 +37,9 @@ namespace clipboardxx {
         virtual void paste(std::string& dest) = 0;
     };
 
-    #ifdef UNIX
+    #ifdef LINUX
 
-    class clipboard_unix: public clipboard_os {
+    class clipboard_linux: public clipboard_os {
     private:
         struct copydata {
             std::thread* m_thread;
@@ -53,7 +53,7 @@ namespace clipboardxx {
         Atom m_sel;
         Atom m_utf8;
 
-        clipboard_unix() {
+        clipboard_linux() {
             m_display = XOpenDisplay(NULL);
             
             int screen = XDefaultScreen(m_display);
@@ -68,7 +68,7 @@ namespace clipboardxx {
             m_copydata.m_text = nullptr;
         }
         
-        static void handle_requests(clipboard_unix* self) {
+        static void handle_requests(clipboard_linux* self) {
             XEvent event;
             while(true) {
                 XNextEvent(self->m_display, &event);
@@ -115,7 +115,7 @@ namespace clipboardxx {
         }
 
     public:
-        ~clipboard_unix() {
+        ~clipboard_linux() {
             free_copydata();
             XDestroyWindow(m_display, m_window);
             XCloseDisplay(m_display);
@@ -220,8 +220,8 @@ namespace clipboardxx {
     class clipboard {
     private:
         clipboard_os* m_clipboard = new 
-        #ifdef UNIX
-            clipboard_unix
+        #ifdef LINUX
+            clipboard_linux
         #elif defined(WINDOWS)
             clipboard_windows
         #endif
