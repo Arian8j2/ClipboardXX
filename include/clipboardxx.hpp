@@ -137,8 +137,14 @@ namespace clipboardxx {
         }
 
         virtual void paste(std::string& dest) {
-            Atom res = XInternAtom(m_display, "RESULT", false);
+            // no need to request clipboard data if we own clipboard
+            Window owner = XGetSelectionOwner(m_display, m_sel);
+            if(owner == m_window) {
+                dest = (char*) m_copydata.m_text;
+                return;
+            }
 
+            Atom res = XInternAtom(m_display, "RESULT", false);
             XConvertSelection(m_display, m_sel, m_utf8, res, m_window, CurrentTime);
 
             XEvent event;
