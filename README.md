@@ -1,14 +1,14 @@
 # ClipboardXX
-Manage clipboard in **easiest** and **cross platform** way  
+Header only lightweight library to **copy** and **paste** from clipboard  
 *Copyright (C) 2020 Arian Rezazadeh*
 
 ## Example
 ```C++
-#include "ClipboardXX.hpp"
+#include "clipboard.hpp"
 #include <string>
 
-int main(){
-    CClipboardXX clipboard;
+int main() {
+    clipboardxx::clipboard clipboard;
 
     // copy
     clipboard‌ << "text you wanna copy";
@@ -18,29 +18,26 @@ int main(){
     clipboard >> paste_text;
 }
 ```
-If some error happens like cannot opening clipboard and etc. You can use  _**error handling**_
-```C++
-try{
-
-    CClipboardXX clipboard;
-    clipboard << "something";
-
-}catch(CExceptionXX &e){
-
-    std::cout << e.what() << std::endl;
-
-}
-```
 
 ## Setup
 
 ### Windows
-Nothing specially need to do, just copy `include/ClipboardXX.hpp` to your include path or you can use CMake
+Nothing specially need to do, just copy `clipboard.hpp` under **include** folder to your include path.
 
-### Unix
-ClipboardXX in Unix based operating systems is just a wrapper around **Qt5 Clipboard**   
-so you can use CMake for compilation and just use:
+### Linux
+in linux based operating systems, clipboardxx requires **X11** and **pthread** to work, Link them manually or use CMake. 
+
+### MacOS
+There is currently **no support for MacOS**, Any contribute would be much appreciated.
+
+#### CMake
+By using CMake, there is no need to manually change include path or link dependencies, Just put clipboardxx folder in your project subdirectoy and use `add_subdirectory` function to execute clipboardxx cmake configurations.
 ```cmake
-    add_subdirectory(ClipboardXX)
+add_subdirectory(ClipboardXX)
 ```
-in your cmake file. include directories and links will be automatically setted 
+## Error handling
+In certain situations such as:  
+- cannot open clipboard in windows
+- cannot empty clipboard in windows
+
+clipboardxx will throw an execption of type `clipboardxx::exception` you can handle it by your own way.
