@@ -31,9 +31,10 @@ in linux based operating systems, clipboardxx requires **X11** and **pthread** t
 There is currently **no support for MacOS**, Any contribute would be much appreciated.
 
 #### CMake
-By using CMake, there is no need to manually change include path or link dependencies, Just put clipboardxx folder in your project subdirectoy and use `add_subdirectory` function to execute clipboardxx cmake configurations.
+By using CMake, there is no need to manually change include path or link dependencies, Just put clipboardxx folder in your project subdirectoy and use `add_subdirectory` function to create `ClipboardXX` library and then link library to your target.
 ```cmake
 add_subdirectory(ClipboardXX)
+target_link_libraries(your_target ClipboardXX)
 ```
 ## Error handling
 In certain situations such as:  
