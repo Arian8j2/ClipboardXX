@@ -1,5 +1,5 @@
 # ClipboardXX
-Header only lightweight library to **copy** and **paste** from clipboard  
+Header only lightweight library to **copy** and **paste** text from clipboard  
 *Copyright (C) 2020 Arian Rezazadeh*
 
 ## Example
@@ -11,7 +11,7 @@ int main() {
     clipboardxx::clipboard clipboard;
 
     // copy
-    clipboard‌ << "text you wanna copy";
+    clipboard << "text you wanna copy";
 
     // paste
     std::string paste_text;
