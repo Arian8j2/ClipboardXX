@@ -10,7 +10,10 @@
 #elif defined(__linux__)
     #define LINUX
     #include <thread>
-    #include <X11/Xlib.h>
+    #include <mutex>
+    #include <atomic>
+    #include <unistd.h>
+    #include <xcb/xcb.h>
 #else
     #error "platform not supported"
 #endif
@@ -33,6 +36,7 @@ namespace clipboardxx {
         clipboard_os() { }
 
     public:
+        virtual ~clipboard_os() { };
         virtual void copy(const char* text, size_t length) = 0;
         virtual void paste(std::string& dest) = 0;
     };
@@ -41,135 +45,204 @@ namespace clipboardxx {
 
     class clipboard_linux: public clipboard_os {
     private:
-        struct copydata {
-            std::thread* m_thread;
-            unsigned char* m_text;
+        xcb_connection_t* m_conn;
+        xcb_window_t m_window;
+
+        xcb_atom_t m_atoms[3];
+        enum selection {
+            clipboard = 0,
+            utf8,
+            result
+        };
+
+        std::thread* m_event_thread;
+        std::mutex m_lock;
+
+        class copy_data {
+        public:
+            char* m_data;
             size_t m_length;
-        } m_copydata;
 
-        Display* m_display;
-        Window m_window;
+            copy_data(const char* data, size_t length) {
+                m_data = new char[length + 1];
+                m_length = length;
+                strcpy(m_data, data);
+            } 
 
-        Atom m_sel;
-        Atom m_utf8;
+            ~copy_data() {
+                delete[] m_data;
+            }
+        };
+
+        copy_data* m_copy_data;
+        std::atomic<xcb_get_property_reply_t*> m_paste_reply;
+
+        static void handle_events(clipboard_linux* self) {
+            xcb_generic_event_t* event;
+
+            while(true) {
+                std::lock_guard<std::mutex> guard(self->m_lock);
+                event = xcb_poll_for_event(self->m_conn);
+
+                if(event == 0) {
+                    usleep(100);
+                    continue;
+                }
+
+                switch(event->response_type & ~0x80) {
+                    case XCB_SELECTION_NOTIFY:
+                        self->m_paste_reply = xcb_get_property_reply(
+                            self->m_conn, 
+                            xcb_get_property(
+                                self->m_conn, false, self->m_window,
+                                self->m_atoms[selection::result], XCB_ATOM_ANY,
+                                0, -1
+                            ),
+                            NULL
+                        );
+                        break;
+                    
+                    case XCB_SELECTION_CLEAR:
+                        if(self->m_copy_data) {
+                            delete self->m_copy_data;
+                            self->m_copy_data = nullptr;
+                        }
+                        break;
+                    
+                    case XCB_SELECTION_REQUEST: {
+                        if(self->m_copy_data == nullptr)
+                            break;
+
+                        auto sel_event = (xcb_selection_request_event_t*) event;
+                        auto notify_event = new xcb_selection_notify_event_t {
+                            .response_type = XCB_SELECTION_NOTIFY,
+                            .time = XCB_CURRENT_TIME,
+                            .requestor = sel_event->requestor,
+                            .selection = sel_event->selection,
+                            .target = sel_event->target,
+                            .property = 0
+                        };
+
+                        if(sel_event->target == self->m_atoms[selection::utf8]) {
+                            xcb_change_property(
+                                self->m_conn, XCB_PROP_MODE_REPLACE,
+                                sel_event->requestor, sel_event->property,
+                                sel_event->target, 8, 
+                                self->m_copy_data->m_length, self->m_copy_data->m_data
+                            );
+
+                            notify_event->property = sel_event->property;
+                        }
+
+                        xcb_send_event(self->m_conn, false, sel_event->requestor,
+                            XCB_EVENT_MASK_PROPERTY_CHANGE, (char*) notify_event);
+                        xcb_flush(self->m_conn);
+                        delete notify_event;
+                    }
+                }
+
+                free(event);
+            }
+        }
 
         clipboard_linux() {
-            m_display = XOpenDisplay(NULL);
-            
-            int screen = XDefaultScreen(m_display);
-            Window root = RootWindow(m_display, screen);
+            m_conn = xcb_connect(NULL, NULL);
 
-            m_window = XCreateSimpleWindow(m_display, root, -10, -10, 1, 1, 0, 0, 0);
+            static const char* atom_names[] = {
+                "CLIPBOARD",
+                "UTF8_STRING",
+                "RESULT"
+            };
 
-            m_sel = XInternAtom(m_display, "CLIPBOARD", false);
-            m_utf8 = XInternAtom(m_display, "UTF8_STRING", false);
-            
-            m_copydata.m_thread = nullptr;
-            m_copydata.m_text = nullptr;
-        }
-        
-        static void handle_requests(clipboard_linux* self) {
-            XEvent event;
-            while(true) {
-                XNextEvent(self->m_display, &event);
-                
-                if(event.type == SelectionClear) {
-                    self->free_copydata();
-                    return;
-                }
+            for(int i=0; i < 3; i++) {
+                const char* name = atom_names[i];
+                auto reply = xcb_intern_atom_reply(
+                    m_conn,
+                    xcb_intern_atom(m_conn, false, strlen(name), name),
+                    NULL
+                );
 
-                if(event.type == SelectionRequest) {
-                    auto sel_event = &event.xselectionrequest;
-                    XSelectionEvent res_event;
-
-                    res_event.type = SelectionNotify;
-                    res_event.requestor = sel_event->requestor;
-                    res_event.selection = sel_event->selection;
-                    res_event.target = sel_event->target;
-                    res_event.time = CurrentTime;
-                    res_event.property = None;
-
-                    if(sel_event->target == self->m_utf8) {
-                        XChangeProperty(self->m_display, sel_event->requestor, sel_event->property,
-                            self->m_utf8, 8, PropModeReplace, self->m_copydata.m_text, self->m_copydata.m_length);
-
-                        res_event.property = sel_event->property;
-                    }
-
-                    XSendEvent(self->m_display, sel_event->requestor, True, NoEventMask, 
-                        (XEvent*) &res_event);
-                }
+                m_atoms[i] = reply->atom;
+                free(reply);
             }
-        }
 
-        void free_ifexist(void** ptr) {
-            if(*ptr != nullptr) {
-                free(*ptr);
-                *ptr = nullptr;
-            }
-        }
+            xcb_screen_t* screen = xcb_setup_roots_iterator(xcb_get_setup(m_conn)).data;
 
-        void free_copydata() {
-            free_ifexist((void**) &m_copydata.m_thread);
-            free_ifexist((void**) &m_copydata.m_text);
+            m_window = xcb_generate_id(m_conn);
+            uint32_t mask_values[] = { XCB_EVENT_MASK_PROPERTY_CHANGE };
+            xcb_create_window(
+                m_conn, XCB_COPY_FROM_PARENT, m_window, screen->root,
+                0, 0, 1, 1, 0, 
+                XCB_WINDOW_CLASS_COPY_FROM_PARENT, screen->root_visual,
+                XCB_CW_EVENT_MASK, mask_values
+            );
+
+            m_paste_reply = nullptr;
+            m_copy_data = nullptr;
+
+            m_event_thread = new std::thread(handle_events, this);
+            m_event_thread->detach();
         }
 
     public:
-        ~clipboard_linux() {
-            free_copydata();
-            XDestroyWindow(m_display, m_window);
-            XCloseDisplay(m_display);
+        virtual ~clipboard_linux() {
+            delete m_event_thread;
+            if(m_copy_data != nullptr)
+                delete m_copy_data;
+
+            xcb_destroy_window(m_conn, m_window);
+            xcb_disconnect(m_conn);
         }
 
         virtual void copy(const char* text, size_t length) {
-            XSetSelectionOwner(m_display, m_sel, m_window, CurrentTime);
+            std::lock_guard<std::mutex> guard(m_lock);
 
-            free_ifexist((void**) &m_copydata.m_text);
+            if(m_copy_data != nullptr)
+                delete m_copy_data;
 
-            m_copydata.m_text = new unsigned char[length];
-            m_copydata.m_length = length;
-            strncpy((char*) m_copydata.m_text, text, length);
-
-            if(m_copydata.m_thread == nullptr) {
-                m_copydata.m_thread = new std::thread(handle_requests, this);
-                m_copydata.m_thread->detach();
-            }
+            m_copy_data = new copy_data(text, length);
+            xcb_set_selection_owner(m_conn, m_window, m_atoms[selection::clipboard], XCB_CURRENT_TIME);
+            xcb_flush(m_conn);          
         }
 
         virtual void paste(std::string& dest) {
-            // no need to request clipboard data if we own clipboard
-            Window owner = XGetSelectionOwner(m_display, m_sel);
-            if(owner == m_window) {
-                dest = (char*) m_copydata.m_text;
-                return;
+            {
+                std::lock_guard<std::mutex> guard(m_lock);
+
+                // no need to request clipboard data if we own clipboard 
+                auto sel_owner = std::unique_ptr<xcb_get_selection_owner_reply_t>(
+                    xcb_get_selection_owner_reply(
+                        m_conn,
+                        xcb_get_selection_owner(m_conn, m_atoms[selection::clipboard]),
+                        NULL
+                    )
+                );
+                
+                if(sel_owner->owner == m_window) {
+                    dest = m_copy_data->m_data;
+                    return;
+                }
+                
+                xcb_convert_selection(
+                    m_conn, m_window,
+                    m_atoms[selection::clipboard], m_atoms[selection::utf8],
+                    m_atoms[selection::result], XCB_CURRENT_TIME
+                );
+                xcb_flush(m_conn);
             }
 
-            Atom res = XInternAtom(m_display, "RESULT", false);
-            XConvertSelection(m_display, m_sel, m_utf8, res, m_window, CurrentTime);
-
-            XEvent event;
             while(true) {
-                XNextEvent(m_display, &event);
-                if(event.type == SelectionNotify) {
-                    if(event.xselection.property == None) {
-                        dest.clear();
-                        return;
-                    }
-
-                    Atom type_return;
-                    int format_return;
-                    unsigned long size, index;
-                    unsigned char* text;
-
-                    XGetWindowProperty(m_display, m_window, res, 0, -1, false, AnyPropertyType,
-                        &type_return, &format_return, &index, &size, &text);
-
-                    dest = (char*) text;
-
-                    XFree(text);
-                    XDeleteProperty(m_display, m_window, res);
+                if(m_paste_reply != nullptr) {
+                    char* value = (char*) xcb_get_property_value(m_paste_reply);
+                    value[m_paste_reply.load()->value_len] = '\0';
+                    
+                    dest = value;
+                    delete m_paste_reply.load();
+                    m_paste_reply = nullptr;
                     break;
                 }
+
+                usleep(1e4);
             }
         }
 
@@ -187,7 +260,7 @@ namespace clipboardxx {
         }
     
     public:
-        ~clipboard_windows() {
+        virtual ~clipboard_windows() {
             CloseClipboard();
         }
 
@@ -200,7 +273,7 @@ namespace clipboardxx {
             #ifdef _MSC_VER
                 strcpy_s((char *)global, (length + 1) * sizeof(char), text);
             #else
-                strncpy((char *)global, text, length);
+                strncpy((char *)global, text, length + 1);
             #endif
             
             SetClipboardData(CF_TEXT, global);

@@ -7,5 +7,5 @@ target_include_directories(${PROJECT_NAME} INTERFACE include)
 install(FILES include/clipboardxx.hpp DESTINATION include)
 
 if(UNIX AND NOT APPLE)
-    target_link_libraries(${PROJECT_NAME} INTERFACE X11 pthread)
+    target_link_libraries(${PROJECT_NAME} INTERFACE xcb pthread)
 endif()

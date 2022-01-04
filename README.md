@@ -25,7 +25,7 @@ int main() {
 Nothing specially need to do, just copy `clipboard.hpp` under **include** folder to your include path.
 
 ### Linux
-in linux based operating systems, clipboardxx requires **X11** and **pthread** to work, Link them manually or use CMake. 
+in linux based operating systems, clipboardxx requires **xcb** and **pthread** to work, Link them manually or use CMake. 
 
 ### MacOS
 There is currently **no support for MacOS**, Any contribute would be much appreciated.
