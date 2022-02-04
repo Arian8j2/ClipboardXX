@@ -253,22 +253,31 @@ namespace clipboardxx {
 
     class clipboard_windows: public clipboard_os {
     private:
-        clipboard_windows() {
-            if(!OpenClipboard(0)) {
-                throw exception("Cannot open clipboard!");
+        // used for open and closing clipboard when goes out of scope
+        class safe_clipboard {
+        public:
+            safe_clipboard() {
+                if(!OpenClipboard(0)) {
+                    throw exception("Cannot open clipboard");
+                }
             }
-        }
-    
+
+            ~safe_clipboard() {
+                CloseClipboard();
+            }
+        };
+
     public:
-        virtual ~clipboard_windows() {
-            CloseClipboard();
-        }
-
         virtual void copy(const char* text, size_t length) {
-            if(!EmptyClipboard())
+            safe_clipboard safe;
+            if(!EmptyClipboard()) {
                 throw exception("Cannot empty clipboard!");
+            }
 
-            HGLOBAL global = GlobalAlloc(GMEM_FIXED, (length + 1)* sizeof(char));
+            HGLOBAL global = GlobalAlloc(GMEM_FIXED, (length + 1) * sizeof(char));
+            if(!global) {
+                throw exception("Cannot allocate memory for copying text");
+            }
 
             #ifdef _MSC_VER
                 strcpy_s((char *)global, (length + 1) * sizeof(char), text);
@@ -277,15 +286,14 @@ namespace clipboardxx {
             #endif
             
             SetClipboardData(CF_TEXT, global);
-            GlobalFree(global);
         }
 
         virtual void paste(std::string& dest) {
+            safe_clipboard safe;
             char* result = (char*) GetClipboardData(CF_TEXT);
 
-            if(result != NULL){
+            if(result != NULL) {
                 dest = result;
-                GlobalFree(result);
             } else {
                 dest.clear();
             }

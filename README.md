@@ -40,5 +40,6 @@ target_link_libraries(your_target ClipboardXX)
 In certain situations such as:  
 - cannot open clipboard in windows
 - cannot empty clipboard in windows
+- cannot allocate memory for copying data in windows
 
 clipboardxx will throw an execption of type `clipboardxx::exception` you can handle it by your own way.
