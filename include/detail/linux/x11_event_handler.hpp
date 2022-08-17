@@ -125,31 +125,26 @@ namespace clipboardxx {
             }
         }
 
-        void handle_request_selection_event(xcb::RequestSelectionEvent* event) {
+        void handle_request_selection_event(const xcb::RequestSelectionEvent* event) {
             if (event->m_selection != m_atoms.clipboard || !m_copy_data.has_value())
                 return;
 
+            bool found_format = std::find(m_atoms.supported_text_formats.begin(), m_atoms.supported_text_formats.end(),
+                                    event->m_target) != m_atoms.supported_text_formats.end();
             if (event->m_target == m_atoms.targets) {
                 m_xcb->write_on_window_property(event->m_requestor, event->m_property, m_atoms.atom, m_targets);
                 m_xcb->notify_window_property_change(event->m_requestor, event->m_property, m_atoms.atom, event->m_selection);
-                return;
-            }
-
-            std::vector<xcb_atom_t>::const_iterator iter = std::find(m_atoms.supported_text_formats.begin(),
-                                                                        m_atoms.supported_text_formats.end(), event->m_target);
-            if (iter == m_atoms.supported_text_formats.end()) {
+            } else if (found_format) {
+                m_xcb->write_on_window_property(event->m_requestor, event->m_property, event->m_target, m_copy_data.value());
+                m_xcb->notify_window_property_change(event->m_requestor, event->m_property, event->m_target, event->m_selection);
+            } else {
                 m_xcb->notify_window_property_change(event->m_requestor, 0, event->m_target, event->m_selection);
-                return;
             }
-
-            m_xcb->write_on_window_property(event->m_requestor, event->m_property, event->m_target, m_copy_data.value());
-            m_xcb->notify_window_property_change(event->m_requestor, event->m_property, event->m_target, event->m_selection);
         }
 
-        void handle_selection_notify_event(xcb::SelectionNotifyEvent* event) {
+        void handle_selection_notify_event(const xcb::SelectionNotifyEvent* event) {
             if (event->m_selection != m_atoms.clipboard || m_paste_data.has_value())
                 return;
-
             m_paste_data = m_xcb->get_our_property_value(m_atoms.buffer);
         }
 
@@ -157,7 +152,6 @@ namespace clipboardxx {
         EssentialAtoms m_atoms;
         std::vector<xcb_atom_t> m_targets;
         std::optional<std::string> m_copy_data, m_paste_data;
-
         std::mutex m_lock;
         std::thread m_event_thread;
         std::atomic<bool> m_stop_event_thread;
