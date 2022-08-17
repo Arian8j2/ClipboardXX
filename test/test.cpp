@@ -77,7 +77,7 @@ TEST_F(ClipboardTest, PasteTextIsEmptyWhenNoDataIsAvailable) {
     EXPECT_EQ(m_clipboard.paste(), "");
 }
 
-TEST_F(ClipboardTest, ClipboardDataGetLostAfterClipboardGoesOutOfScopeInXorgLinux) {
+TEST_F(ClipboardTest, ClipboardDataGetLostAfterClipboardGoesOutOfScopeInX11Linux) {
     const std::string text = "hello";
 
     {
