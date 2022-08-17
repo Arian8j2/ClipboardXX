@@ -2,18 +2,16 @@
 
 namespace clipboardxx {
 namespace xcb {
-
     using Atom = xcb_atom_t;
     using Window = xcb_window_t;
 
     class Event {
     public:
-        // TODO: use constexpr case for enums
         enum Type {
-            NONE = 0,
-            REQUEST_SELECTION,
-            SELECTION_CLEAR,
-            SELECTION_NOTIFY
+            kNone = 0,
+            kRequestSelection,
+            kSelectionClear,
+            kSelectionNotify
         };
 
         Event(Type type) : m_type(type) {}
@@ -26,7 +24,7 @@ namespace xcb {
     class RequestSelectionEvent : public Event {
     public:
         RequestSelectionEvent(Window requestor, Window owner, Atom selection, Atom target, Atom property) :
-            Event(Type::REQUEST_SELECTION), m_requestor(requestor), m_owner(owner),
+            Event(Type::kRequestSelection), m_requestor(requestor), m_owner(owner),
                 m_selection(selection), m_target(target), m_property(property) {}
 
         const Window m_requestor, m_owner;
@@ -35,7 +33,7 @@ namespace xcb {
 
     class SelectionNotifyEvent : public Event {
     public:
-        SelectionNotifyEvent(Window requestor, Atom selection, Atom target, Atom property) : Event(Type::SELECTION_NOTIFY),
+        SelectionNotifyEvent(Window requestor, Atom selection, Atom target, Atom property) : Event(Type::kSelectionNotify),
             m_requestor(requestor), m_selection(selection), m_target(target), m_property(property) {}
 
         const Window m_requestor;
@@ -44,7 +42,7 @@ namespace xcb {
 
     class SelectionClearEvent : public Event {
     public:
-        SelectionClearEvent(Atom selection) : Event(Type::SELECTION_CLEAR), m_selection(selection) {}
+        SelectionClearEvent(Atom selection) : Event(Type::kSelectionClear), m_selection(selection) {}
 
         const Atom m_selection;
     };

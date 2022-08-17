@@ -111,16 +111,16 @@ namespace clipboardxx {
 
         void handle_event(std::unique_ptr<xcb::Event> event) {
             switch (event->get_type()) {
-                case xcb::Event::Type::REQUEST_SELECTION:
+                case xcb::Event::Type::kRequestSelection:
                     handle_request_selection_event(reinterpret_cast<xcb::RequestSelectionEvent*>(event.get()));
                     break;
-                case xcb::Event::Type::SELECTION_CLEAR:
+                case xcb::Event::Type::kSelectionClear:
                     m_copy_data = std::nullopt;
                     break;
-                case xcb::Event::Type::SELECTION_NOTIFY:
+                case xcb::Event::Type::kSelectionNotify:
                     handle_selection_notify_event(reinterpret_cast<xcb::SelectionNotifyEvent*>(event.get()));
                     break;
-                case xcb::Event::NONE:
+                case xcb::Event::Type::kNone:
                     return;
             }
         }

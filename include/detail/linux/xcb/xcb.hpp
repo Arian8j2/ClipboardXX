@@ -155,7 +155,7 @@ namespace xcb {
                 }
 
                 default:
-                    return std::make_unique<Event>(Event::Type::NONE);
+                    return std::make_unique<Event>(Event::Type::kNone);
             }
         }
 
