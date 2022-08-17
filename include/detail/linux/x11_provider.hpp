@@ -8,7 +8,7 @@
 namespace clipboardxx {
     constexpr const char* kClipboardAtomName = "CLIPBOARD";
 
-    class X11Provider : public clipboard_linux_provider {
+    class X11Provider : public LinuxClipboardProvider {
     public:
         X11Provider() : m_xcb(std::make_shared<xcb::Xcb>()), m_clipboard_atom(m_xcb->create_atom(kClipboardAtomName)),
             m_event_handler(X11EventHandler(m_xcb)) {}

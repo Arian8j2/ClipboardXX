@@ -24,7 +24,7 @@ namespace clipboardxx {
         }
 
     private:
-        std::unique_ptr<clipboard_linux_provider> m_provider;
+        std::unique_ptr<LinuxClipboardProvider> m_provider;
     };
 }
 
