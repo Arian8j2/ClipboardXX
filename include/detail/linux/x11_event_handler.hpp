@@ -1,3 +1,7 @@
+#pragma once
+
+#include "xcb/xcb.hpp"
+
 #include <mutex>
 #include <memory>
 #include <optional>
@@ -8,8 +12,6 @@
 #include <algorithm>
 #include <atomic>
 #include <array>
-
-#include "xcb/xcb.hpp"
 
 namespace clipboardxx {
     constexpr std::chrono::duration kHandleEventsForEverDelay = std::chrono::milliseconds(50);
@@ -30,20 +32,8 @@ namespace clipboardxx {
 
     class X11EventHandler {
     public:
-        X11EventHandler(std::shared_ptr<xcb::Xcb> xcb) : m_xcb(std::move(xcb)) {
-            m_atoms.clipboard = m_xcb->create_atom("CLIPBOARD"); 
-            m_atoms.buffer = m_xcb->create_atom("BUFFER"); 
-            m_atoms.targets = m_xcb->create_atom("TARGETS"); 
-            m_atoms.atom = m_xcb->create_atom("ATOM"); 
-
-            m_atoms.supported_text_formats = std::vector<xcb_atom_t>(kSupportedTextFormats.size());
-            std::transform(kSupportedTextFormats.begin(), kSupportedTextFormats.end(), m_atoms.supported_text_formats.begin(),
-                    [this](const char* name) { return m_xcb->create_atom(std::string(name)); });
-
-            m_targets = std::vector<xcb_atom_t>(m_atoms.supported_text_formats.size() + 1);
-            m_targets[0] = m_atoms.targets;
-            std::copy(m_atoms.supported_text_formats.begin(), m_atoms.supported_text_formats.end(), m_targets.begin() + 1);
-
+        X11EventHandler(std::shared_ptr<xcb::Xcb> xcb) : m_xcb(std::move(xcb)), m_atoms(create_essential_atoms()),
+                                            m_targets(generate_targets_atom_array(m_atoms.targets, m_atoms.supported_text_formats)){
             m_stop_event_thread = false;
             m_event_thread = std::thread(&X11EventHandler::handle_events_for_ever, this); 
         }
@@ -75,7 +65,27 @@ namespace clipboardxx {
         }
 
     private:
-        bool do_we_own_clipoard() {
+        EssentialAtoms create_essential_atoms() const {
+            EssentialAtoms atoms;
+            atoms.clipboard = m_xcb->create_atom("CLIPBOARD"); 
+            atoms.buffer = m_xcb->create_atom("BUFFER"); 
+            atoms.targets = m_xcb->create_atom("TARGETS"); 
+            atoms.atom = m_xcb->create_atom("ATOM"); 
+
+            atoms.supported_text_formats = std::vector<xcb_atom_t>(kSupportedTextFormats.size());
+            std::transform(kSupportedTextFormats.begin(), kSupportedTextFormats.end(), atoms.supported_text_formats.begin(),
+                    [this](const char* name) { return m_xcb->create_atom(std::string(name)); });
+            return atoms;
+        }
+
+        std::vector<xcb::Atom> generate_targets_atom_array(xcb::Atom target, const std::vector<xcb::Atom> atoms) {
+            std::vector<xcb::Atom> targets(atoms.size() + 1);
+            targets[0] = target;
+            std::copy(atoms.begin(), atoms.end(), targets.begin() + 1);
+            return targets;
+        }
+
+        bool do_we_own_clipoard() const {
             return m_copy_data.has_value();
         }
 
@@ -148,9 +158,9 @@ namespace clipboardxx {
             m_paste_data = m_xcb->get_our_property_value(m_atoms.buffer);
         }
 
-        std::shared_ptr<xcb::Xcb> m_xcb;
-        EssentialAtoms m_atoms;
-        std::vector<xcb_atom_t> m_targets;
+        const std::shared_ptr<xcb::Xcb> m_xcb;
+        const EssentialAtoms m_atoms;
+        const std::vector<xcb_atom_t> m_targets;
         std::optional<std::string> m_copy_data, m_paste_data;
         std::mutex m_lock;
         std::thread m_event_thread;

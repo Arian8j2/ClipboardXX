@@ -1,5 +1,7 @@
 #ifdef WINDOWS
 
+#pragma once
+
 #include "interface.hpp"
 #include "exception.hpp"
 

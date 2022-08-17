@@ -1,5 +1,7 @@
 #ifdef LINUX
 
+#pragma once
+
 #include "exception.hpp"
 #include "interface.hpp"
 #include "linux/x11_provider.hpp"

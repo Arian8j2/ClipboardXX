@@ -1,6 +1,8 @@
+#pragma once
+
+#include "../exception.hpp"
 #include "provider.hpp"
 #include "x11_event_handler.hpp"
-#include "../exception.hpp"
 #include "xcb/xcb.hpp"
 
 #include <memory>
