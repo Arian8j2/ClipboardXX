@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 set(CMAKE_CXX_STANDARD 17)
 
 option(TESTS "compile tests" OFF)
@@ -12,8 +12,8 @@ install(FILES include/clipboardxx.hpp DESTINATION include)
 
 # dependencies
 if(UNIX AND NOT APPLE)
-    # TODO: better find xcb package
-    target_link_libraries(${PROJECT_NAME} INTERFACE xcb pthread)
+    find_library(XCB NAMES xcb REQUIRED)
+    target_link_libraries(${PROJECT_NAME} INTERFACE ${XCB} pthread)
 endif()
 
 # tests
