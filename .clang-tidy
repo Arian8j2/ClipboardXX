@@ -1,0 +1,7 @@
+Checks: >
+  cppcoreguidelines-*,
+  -cppcoreguidelines-init-variables,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  clang-analyzer-*,
+  performance-*,
