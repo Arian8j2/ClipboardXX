@@ -1,33 +1,30 @@
-#ifdef LINUX
-
 #pragma once
 
-#include "exception.hpp"
-#include "interface.hpp"
-#include "linux/x11_provider.hpp"
+#ifdef LINUX
+    #include "exception.hpp"
+    #include "interface.hpp"
+    #include "linux/x11_provider.hpp"
 
 namespace clipboardxx {
-    class clipboard_linux : public clipboard_interface {
-    public:
-        clipboard_linux() {
-            m_provider = std::make_unique<X11Provider>();
-        }
 
-        void copy(const std::string &text) const override {
-            try {
-                m_provider->copy(text);
-            } catch (const exception &error) {
-                throw exception("XCB Error: " + std::string(error.what()));
-            }
-        }
+class clipboard_linux : public clipboard_interface {
+public:
+    clipboard_linux() { m_provider = std::make_unique<X11Provider>(); }
 
-        std::string paste() const override {
-            return m_provider->paste();
+    void copy(const std::string &text) const override {
+        try {
+            m_provider->copy(text);
+        } catch (const exception &error) {
+            throw exception("XCB Error: " + std::string(error.what()));
         }
+    }
 
-    private:
-        std::unique_ptr<LinuxClipboardProvider> m_provider;
-    };
-}
+    std::string paste() const override { return m_provider->paste(); }
+
+private:
+    std::unique_ptr<LinuxClipboardProvider> m_provider;
+};
+
+} // namespace clipboardxx
 
 #endif

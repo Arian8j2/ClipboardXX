@@ -16,8 +16,7 @@ protected:
         EXPECT_EQ(clipboard.paste(), text);
     }
 
-    template <typename Container>
-    void expect_no_duplicate_item(const Container &container) {
+    template <typename Container> void expect_no_duplicate_item(const Container &container) {
         for (auto iter = container.begin(); iter != container.end(); iter = std::next(iter))
             EXPECT_EQ(std::find(container.begin(), container.end(), *iter), iter);
     }
@@ -29,14 +28,14 @@ protected:
 TEST_F(ClipboardTest, RandomGeneratorGenerateDisplayableTextFiveSamplesMustBeDifferent) {
     std::vector<std::string> samples(5);
     std::generate(samples.begin(), samples.end(),
-            std::bind(&RandomGenerator::generate_random_displayable_text, m_random_generator, SMALL_TEXT_SIZE));
-    expect_no_duplicate_item(samples); 
+                  std::bind(&RandomGenerator::generate_random_displayable_text, m_random_generator, SMALL_TEXT_SIZE));
+    expect_no_duplicate_item(samples);
 }
 
 TEST_F(ClipboardTest, RandomGeneratorGenerateBytesFiveSamplesMustBeDifferent) {
     std::vector<std::vector<uint8_t>> samples(5);
     std::generate(samples.begin(), samples.end(),
-            std::bind(&RandomGenerator::generate_random_bytes, m_random_generator, SMALL_TEXT_SIZE));
+                  std::bind(&RandomGenerator::generate_random_bytes, m_random_generator, SMALL_TEXT_SIZE));
     expect_no_duplicate_item(samples);
 }
 

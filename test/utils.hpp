@@ -7,8 +7,10 @@ constexpr const char DISPLAYABLE_CHARACTERS[] = "abcdefghijklmnopqrstuvwxyzABCDE
 
 class RandomGenerator {
 public:
-    RandomGenerator() : m_engine(std::default_random_engine(std::time(nullptr))),
-        m_displayable_char_index_distro(std::uniform_int_distribution<uint8_t>(sizeof(char) * sizeof(DISPLAYABLE_CHARACTERS))) {}
+    RandomGenerator()
+        : m_engine(std::default_random_engine(std::time(nullptr))),
+          m_displayable_char_index_distro(
+              std::uniform_int_distribution<uint8_t>(sizeof(char) * sizeof(DISPLAYABLE_CHARACTERS))) {}
 
     std::vector<uint8_t> generate_random_bytes(size_t size) {
         std::vector<uint8_t> result(size);
@@ -23,9 +25,7 @@ public:
         return result;
     }
 
-    uint16_t generate_random_16_bit_number() {
-        return m_uint16_distro(m_engine);
-    }
+    uint16_t generate_random_16_bit_number() { return m_uint16_distro(m_engine); }
 
 private:
     std::default_random_engine m_engine;
