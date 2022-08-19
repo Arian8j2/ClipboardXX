@@ -15,7 +15,8 @@
 
 namespace clipboardxx {
 
-constexpr std::chrono::duration kHandleEventsForEverDelay = std::chrono::milliseconds(50);
+constexpr std::chrono::duration kHandleEventsForEverDelay = std::chrono::milliseconds(20);
+constexpr std::chrono::duration kWaitForPasteDataTimeout = std::chrono::milliseconds(300);
 constexpr std::array<const char*, 7> kSupportedTextFormats = {
     "UTF8_STRING", "text/plain;charset=utf-8", "text/plain;charset=UTF-8", "GTK_TEXT_BUFFER_CONTENTS", "STRING", "TEXT",
     "text/plain"};
@@ -29,8 +30,8 @@ class X11EventHandler {
 public:
     X11EventHandler(std::shared_ptr<xcb::Xcb> xcb)
         : m_xcb(std::move(xcb)), m_atoms(create_essential_atoms()),
-          m_targets(generate_targets_atom_array(m_atoms.targets, m_atoms.supported_text_formats)) {
-        m_stop_event_thread = false;
+          m_targets(generate_targets_atom_array(m_atoms.targets, m_atoms.supported_text_formats)),
+          m_stop_event_thread(false) {
         m_event_thread = std::thread(&X11EventHandler::handle_events_for_ever, this);
     }
 
@@ -53,7 +54,7 @@ public:
                 m_xcb->request_selection_data(m_atoms.clipboard, m_atoms.supported_text_formats.at(0), m_atoms.buffer);
         }
 
-        wait_for_paste_data_with_timeout(std::chrono::milliseconds(500));
+        wait_for_paste_data_with_timeout(kWaitForPasteDataTimeout);
         std::lock_guard<std::mutex> lock_guard(m_lock);
         std::string result = m_paste_data.value_or(std::string(""));
         m_paste_data.reset();
@@ -74,7 +75,7 @@ private:
         return atoms;
     }
 
-    std::vector<xcb::Atom> generate_targets_atom_array(xcb::Atom target, const std::vector<xcb::Atom> atoms) {
+    std::vector<xcb::Atom> generate_targets_atom_array(xcb::Atom target, const std::vector<xcb::Atom> &atoms) {
         std::vector<xcb::Atom> targets(atoms.size() + 1);
         targets[0] = target;
         std::copy(atoms.begin(), atoms.end(), targets.begin() + 1);

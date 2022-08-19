@@ -12,6 +12,7 @@ namespace clipboardxx {
 namespace xcb {
 
 constexpr uint8_t kBitsPerByte = 8;
+constexpr uint8_t kFilterXcbEventType = 0x80;
 
 class Xcb {
 public:
@@ -26,7 +27,7 @@ public:
 
     Xcb() : m_conn(create_connection()), m_window(create_window(m_conn.get())) {}
 
-    Atom create_atom(std::string name) {
+    Atom create_atom(const std::string &name) {
         xcb_intern_atom_cookie_t cookie = xcb_intern_atom(m_conn.get(), false, name.size(), name.c_str());
 
         xcb_generic_error_t* error = nullptr;
@@ -86,10 +87,9 @@ public:
 
         xcb_generic_error_t* error = nullptr;
         std::unique_ptr<xcb_get_property_reply_t> reply(xcb_get_property_reply(m_conn.get(), cookie, &error));
-        if (error != nullptr) {
-            free(error);
+        std::unique_ptr<xcb_generic_error_t> error_ptr(error);
+        if (error != nullptr)
             return std::string("");
-        }
 
         const char* data = reinterpret_cast<const char*>(xcb_get_property_value(reply.get()));
         uint32_t length = xcb_get_property_value_length(reply.get());
@@ -139,7 +139,7 @@ private:
     }
 
     std::unique_ptr<Event> convert_generic_event_to_event(std::unique_ptr<xcb_generic_event_t> event) {
-        uint8_t event_type = event->response_type & ~0x80;
+        uint8_t event_type = event->response_type & ~kFilterXcbEventType;
         switch (event_type) {
         // someone requested clipboard data
         case XCB_SELECTION_REQUEST: {

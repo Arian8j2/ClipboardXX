@@ -9,7 +9,7 @@ namespace clipboardxx {
 
 class clipboard_linux : public clipboard_interface {
 public:
-    clipboard_linux() { m_provider = std::make_unique<X11Provider>(); }
+    clipboard_linux() : m_provider(std::make_unique<X11Provider>()) {}
 
     void copy(const std::string &text) const override {
         try {
@@ -22,7 +22,7 @@ public:
     std::string paste() const override { return m_provider->paste(); }
 
 private:
-    std::unique_ptr<LinuxClipboardProvider> m_provider;
+    const std::unique_ptr<LinuxClipboardProvider> m_provider;
 };
 
 } // namespace clipboardxx
