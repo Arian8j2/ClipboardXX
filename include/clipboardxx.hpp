@@ -26,7 +26,11 @@ class clipboard {
 public:
     clipboard() : m_clipboard(std::make_unique<ClipboardType>()) {}
 
+    void operator<<(const std::string &text) const { copy(text); }
+
     void copy(const std::string &text) const { m_clipboard->copy(text); }
+
+    void operator>>(std::string &result) const { result = paste(); }
 
     std::string paste() const { return m_clipboard->paste(); }
 

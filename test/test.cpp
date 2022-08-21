@@ -51,6 +51,15 @@ TEST_F(ClipboardTest, CopyPasteLargeText) {
     expect_clipboard_data(random_text);
 }
 
+TEST_F(ClipboardTest, CopyPasteWithOperatorOverload) {
+    const std::string text = "hello";
+    m_clipboard << text;
+
+    std::string result;
+    m_clipboard >> result;
+    EXPECT_EQ(text, result);
+}
+
 TEST_F(ClipboardTest, PasteWhenYouAreClipboardOwner) {
     const std::string random_text = m_random_generator.generate_random_displayable_text(SMALL_TEXT_SIZE);
     m_clipboard.copy(random_text);
