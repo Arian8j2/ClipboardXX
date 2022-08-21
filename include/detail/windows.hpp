@@ -11,7 +11,7 @@
 
 namespace clipboardxx {
 
-class clipboard_windows : public clipboard_interface {
+class ClipboardWindows : public ClipboardInterface {
 public:
     void copy(const std::string &text) const override {
         OpenCloseClipboardRaii clipboard_raii;

@@ -4,9 +4,9 @@
 
 namespace clipboardxx {
 
-class clipboard_interface {
+class ClipboardInterface {
 public:
-    virtual ~clipboard_interface() = default;
+    virtual ~ClipboardInterface() = default;
     virtual void copy(const std::string &text) const = 0;
     virtual std::string paste() const = 0;
 };

@@ -7,9 +7,9 @@
 
 namespace clipboardxx {
 
-class clipboard_linux : public clipboard_interface {
+class ClipboardLinux : public ClipboardInterface {
 public:
-    clipboard_linux() : m_provider(std::make_unique<X11Provider>()) {}
+    ClipboardLinux() : m_provider(std::make_unique<X11Provider>()) {}
 
     void copy(const std::string &text) const override {
         try {

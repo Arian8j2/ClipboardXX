@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
-#include <cassert>
 #include <chrono>
 #include <memory>
 #include <mutex>
@@ -164,4 +163,5 @@ private:
     std::thread m_event_thread;
     std::atomic<bool> m_stop_event_thread;
 };
+
 } // namespace clipboardxx

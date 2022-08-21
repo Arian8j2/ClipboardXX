@@ -19,9 +19,9 @@ public:
     using Atom = xcb_atom_t;
     using Window = xcb_window_t;
 
-    class Exception : public exception {
+    class XcbException : public exception {
     public:
-        Exception(const std::string &reason, int32_t error_code)
+        XcbException(const std::string &reason, int32_t error_code)
             : exception(reason + " (" + std::to_string(error_code) + ")"){};
     };
 
@@ -108,7 +108,7 @@ private:
         XcbConnectionPtr connection(xcb_connect(nullptr, nullptr));
         int32_t error = xcb_connection_has_error(connection.get());
         if (error > 0)
-            throw Exception("Cannot connect to X server", error);
+            throw XcbException("Cannot connect to X server", error);
 
         return connection;
     }
@@ -135,7 +135,7 @@ private:
     void handle_generic_error(xcb_generic_error_t* error, const std::string &error_msg) const {
         std::unique_ptr<xcb_generic_error_t> error_ptr(error);
         if (error_ptr)
-            throw Exception(error_msg, error_ptr->error_code);
+            throw XcbException(error_msg, error_ptr->error_code);
     }
 
     std::unique_ptr<Event> convert_generic_event_to_event(std::unique_ptr<xcb_generic_event_t> event) {

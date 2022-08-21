@@ -17,21 +17,21 @@
 namespace clipboardxx {
 
 #ifdef WINDOWS
-using clipboard_type = clipboard_windows;
+using ClipboardType = ClipboardWindows;
 #elif defined(LINUX)
-using clipboard_type = clipboard_linux;
+using ClipboardType = ClipboardLinux;
 #endif
 
 class clipboard {
 public:
-    clipboard() : m_clipboard(std::make_unique<clipboard_type>()) {}
+    clipboard() : m_clipboard(std::make_unique<ClipboardType>()) {}
 
     void copy(const std::string &text) const { m_clipboard->copy(text); }
 
     std::string paste() const { return m_clipboard->paste(); }
 
 private:
-    std::unique_ptr<clipboard_interface> m_clipboard;
+    std::unique_ptr<ClipboardInterface> m_clipboard;
 };
 
 } // namespace clipboardxx
