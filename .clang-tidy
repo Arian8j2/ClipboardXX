@@ -5,5 +5,6 @@ Checks: >
   -cppcoreguidelines-non-private-member-variables-in-classes,
   -cppcoreguidelines-special-member-functions,
   -cppcoreguidelines-pro-type-member-init,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic, # we are using cpp17 and not have span<T> yet so no choice
   clang-analyzer-*,
   performance-*,

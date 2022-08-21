@@ -9,8 +9,8 @@ constexpr size_t LARGE_TEXT_SIZE = 10000;
 class ClipboardTest : public testing::Test {
 protected:
     void expect_clipboard_data(const std::string &text) {
-        /* using another instance because same instance owns clipboard and will not send request
-           and just uses internal memory to access clipboard data */
+        /* using another instance because in x11 linux same instance owns clipboard and will
+           not send request and just uses internal memory to access clipboard data */
 
         const clipboardxx::clipboard clipboard;
         EXPECT_EQ(clipboard.paste(), text);
@@ -21,7 +21,7 @@ protected:
             EXPECT_EQ(std::find(container.begin(), container.end(), *iter), iter);
     }
 
-    clipboardxx::clipboard m_clipboard;
+    const clipboardxx::clipboard m_clipboard;
     RandomGenerator m_random_generator;
 };
 
@@ -43,15 +43,6 @@ TEST_F(ClipboardTest, CopyPasteSmallText) {
     const std::string random_text = m_random_generator.generate_random_displayable_text(SMALL_TEXT_SIZE);
     m_clipboard.copy(random_text);
     expect_clipboard_data(random_text);
-}
-
-TEST_F(ClipboardTest, CopyPasteTextContainingNullAtMiddle) {
-    const std::vector<uint8_t> bytes({'a', '\0', 'b'});
-    const std::string string_with_null(bytes.begin(), bytes.end());
-    EXPECT_EQ(string_with_null.at(1), '\0');
-
-    m_clipboard.copy(string_with_null);
-    expect_clipboard_data(string_with_null);
 }
 
 TEST_F(ClipboardTest, CopyPasteLargeText) {
@@ -76,6 +67,8 @@ TEST_F(ClipboardTest, PasteTextIsEmptyWhenNoDataIsAvailable) {
     EXPECT_EQ(m_clipboard.paste(), "");
 }
 
+#ifdef LINUX
+
 TEST_F(ClipboardTest, ClipboardDataGetLostAfterClipboardGoesOutOfScopeInX11Linux) {
     const std::string text = "hello";
 
@@ -86,3 +79,18 @@ TEST_F(ClipboardTest, ClipboardDataGetLostAfterClipboardGoesOutOfScopeInX11Linux
 
     EXPECT_EQ(m_clipboard.paste(), "");
 }
+
+#elif defined(WINDOWS)
+
+TEST_F(ClipboardTest, ClipboardDataRemainsAfterClipboardGoesOutOfScopeInWindows) {
+    const std::string text = "hello";
+
+    {
+        clipboardxx::clipboard clipboard;
+        clipboard.copy(text);
+    }
+
+    EXPECT_EQ(m_clipboard.paste(), text);
+}
+
+#endif
