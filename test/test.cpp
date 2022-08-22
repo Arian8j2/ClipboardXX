@@ -3,8 +3,8 @@
 
 #include "utils.hpp"
 
-constexpr size_t SMALL_TEXT_SIZE = 100;
-constexpr size_t LARGE_TEXT_SIZE = 10000;
+constexpr size_t kSmallTextSize = 100;
+constexpr size_t kLargeTextSize = 10000;
 
 class ClipboardTest : public testing::Test {
 protected:
@@ -28,25 +28,25 @@ protected:
 TEST_F(ClipboardTest, RandomGeneratorGenerateDisplayableTextFiveSamplesMustBeDifferent) {
     std::vector<std::string> samples(5);
     std::generate(samples.begin(), samples.end(),
-                  std::bind(&RandomGenerator::generate_random_displayable_text, m_random_generator, SMALL_TEXT_SIZE));
+                  std::bind(&RandomGenerator::generate_random_displayable_text, m_random_generator, kSmallTextSize));
     expect_no_duplicate_item(samples);
 }
 
 TEST_F(ClipboardTest, RandomGeneratorGenerateBytesFiveSamplesMustBeDifferent) {
     std::vector<std::vector<uint8_t>> samples(5);
     std::generate(samples.begin(), samples.end(),
-                  std::bind(&RandomGenerator::generate_random_bytes, m_random_generator, SMALL_TEXT_SIZE));
+                  std::bind(&RandomGenerator::generate_random_bytes, m_random_generator, kSmallTextSize));
     expect_no_duplicate_item(samples);
 }
 
 TEST_F(ClipboardTest, CopyPasteSmallText) {
-    const std::string random_text = m_random_generator.generate_random_displayable_text(SMALL_TEXT_SIZE);
+    const std::string random_text = m_random_generator.generate_random_displayable_text(kSmallTextSize);
     m_clipboard.copy(random_text);
     expect_clipboard_data(random_text);
 }
 
 TEST_F(ClipboardTest, CopyPasteLargeText) {
-    const std::string random_text = m_random_generator.generate_random_displayable_text(LARGE_TEXT_SIZE);
+    const std::string random_text = m_random_generator.generate_random_displayable_text(kLargeTextSize);
     m_clipboard.copy(random_text);
     expect_clipboard_data(random_text);
 }
@@ -61,7 +61,7 @@ TEST_F(ClipboardTest, CopyPasteWithOperatorOverload) {
 }
 
 TEST_F(ClipboardTest, PasteWhenYouAreClipboardOwner) {
-    const std::string random_text = m_random_generator.generate_random_displayable_text(SMALL_TEXT_SIZE);
+    const std::string random_text = m_random_generator.generate_random_displayable_text(kSmallTextSize);
     m_clipboard.copy(random_text);
     EXPECT_EQ(m_clipboard.paste(), random_text);
 }
