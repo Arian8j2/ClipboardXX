@@ -40,7 +40,27 @@ private:
 
     class WindowsException : public exception {
     public:
-        WindowsException(const std::string &reason) : exception(reason + " (" + std::to_string(GetLastError()) + ")"){};
+        WindowsException(const std::string &reason) : exception(reason + " (" + get_last_windows_error() + ")"){};
+
+    private:
+        std::string get_last_windows_error() const {
+            DWORD error = GetLastError();
+            if (error) {
+                LPVOID buffer = nullptr;
+                DWORD buffer_len = FormatMessage(
+                    FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                    nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPTSTR>(&buffer), 0, nullptr);
+
+                if (buffer_len) {
+                    LPTSTR buffer_char = reinterpret_cast<LPTSTR>(buffer);
+                    std::string result(buffer_char, buffer_char + buffer_len);
+                    LocalFree(buffer);
+                    return result;
+                }
+            }
+
+            return std::string("unknown windows error");
+        }
     };
 
     class WindowsPtrDeleter {
