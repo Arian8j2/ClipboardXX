@@ -19,7 +19,7 @@ public:
         empty_clipboard();
         std::unique_ptr<char, WindowsPtrDeleter> buffer = allocate_memory_with_size(text.size() + 1);
         write_string_to_memory_null_terminated(text, buffer.get());
-        set_clipboard_data_from_memory(buffer.get());
+        set_clipboard_data_from_memory(std::move(buffer));
     }
 
     std::string paste() const noexcept override {
@@ -68,7 +68,14 @@ private:
         memory[text.size()] = '\0';
     }
 
-    void set_clipboard_data_from_memory(char* memory) const { SetClipboardData(CF_TEXT, memory); }
+    void set_clipboard_data_from_memory(std::unique_ptr<char, WindowsPtrDeleter> buffer) const {
+        if (SetClipboardData(CF_TEXT, buffer.get())) {
+            // from now on the system owns the buffer
+            buffer.release();
+        } else {
+            throw WindowsException("Cannot set clipboard data");
+        }
+    }
 
     std::string get_clipboard_data() const {
         char* result = reinterpret_cast<char*>(GetClipboardData(CF_TEXT));
