@@ -32,7 +32,7 @@ private:
     public:
         OpenCloseClipboardRaii() {
             if (!OpenClipboard(0))
-                throw exception("Cannot open clipboard");
+                throw WindowsException("Cannot open clipboard");
         }
 
         ~OpenCloseClipboardRaii() { CloseClipboard(); }
