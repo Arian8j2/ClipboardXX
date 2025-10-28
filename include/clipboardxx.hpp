@@ -1,12 +1,12 @@
 #pragma once
 
-#include "detail/interface.hpp"
+#include "clipboardxx-detail/interface.hpp"
 #if defined(_WIN32) || defined(WIN32)
     #define WINDOWS
-    #include "detail/windows.hpp"
+    #include "clipboardxx-detail/windows.hpp"
 #elif defined(__linux__)
     #define LINUX
-    #include "detail/linux.hpp"
+    #include "clipboardxx-detail/linux.hpp"
 #else
     #error "platform not supported"
 #endif

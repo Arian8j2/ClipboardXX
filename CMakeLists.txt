@@ -10,6 +10,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE include)
 
 # install header files
 install(FILES include/clipboardxx.hpp DESTINATION include)
+install(DIRECTORY include/clipboardxx-detail DESTINATION include)
 
 # dependencies
 if(UNIX AND NOT APPLE)
